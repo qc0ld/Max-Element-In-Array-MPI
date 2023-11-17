@@ -16,6 +16,7 @@ int main(int argc, char** argv)
 	int  max = -1; 
 
 	ret = MPI_Init(&argc, &argv);
+	
 	if (!rank) { printf("MPI Init returned (%d);\n", ret); }
 
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -33,6 +34,8 @@ int main(int argc, char** argv)
 	const int wstart = (rank) * count / size;
 	const int wend = (rank + 1) * count / size;
 
+	MPI_Barrier(MPI_COMM_WORLD);
+
 	double start_time = MPI_Wtime();
 	
 	for (int i = wstart; i < wend;i++)
@@ -40,18 +43,19 @@ int main(int argc, char** argv)
 		if (array[i] > lmax) { lmax = array[i]; }
 	}
 
-	double end_time = MPI_Wtime();
-
 	MPI_Reduce(&lmax, &max, 1, MPI_INTEGER, MPI_MAX, 0, MPI_COMM_WORLD);
 
-	ret = MPI_Finalize();
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	double end_time = MPI_Wtime();
 
 	if (!rank) { 
-		printf("Threads: %d, Execution time: %f seconds\n", size, end_time - start_time);
-		printf("Max element: %d\n", max);
+		printf("Execution time: %f seconds\n", end_time - start_time);
 	}
 
 	free(array);
+
+	MPI_Finalize();
 
 	return(0);
 }
